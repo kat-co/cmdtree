@@ -1,6 +1,8 @@
 #+TITLE: cmdtree
 #+AUTHOR: Katherine E. Cox-Buday
 
+[[file:https:/godoc.org/github.com/katco-/cmdtree][file:https://godoc.org/github.com/katco-/cmdtree?status.svg]]
+
 cmdtree is a library which curates command and sub-command creation and execution.
 
 You probably want to spend your time worrying about what the commands do, and not how to let user's execute them. In that spirit, cmdtree provides the following:
@@ -16,7 +18,7 @@ You probably want to spend your time worrying about what the commands do, and no
 
 ** A Simple Command
 
-#+BEGIN_SRC go :cached yes :exports both :tangle examples/simple.go
+#+BEGIN_SRC go :cached yes :exports both :tangle examples/simple/simple.go
     package main
 
     import (
@@ -41,7 +43,7 @@ You probably want to spend your time worrying about what the commands do, and no
 
 ** A Command with an Optional Sub-Command
 
-#+BEGIN_SRC go :cached yes :exports both :tangle examples/subcommands.go
+#+BEGIN_SRC go :cached yes :exports both :tangle examples/subcommands/subcommands.go
   package main
 
   import (
@@ -76,7 +78,7 @@ You probably want to spend your time worrying about what the commands do, and no
 
 The levels of sub-commands can be arbitrarily deep, but the complexity remains manageable because you can continually pick up from the previous level.
 
-#+BEGIN_SRC go :exports both :tangle examples/multiplelevels.go
+#+BEGIN_SRC go :exports both :tangle examples/multiplelevels/multiplelevels.go
   package main
 
   import (
@@ -136,7 +138,7 @@ The levels of sub-commands can be arbitrarily deep, but the complexity remains m
 
 ** A Command with More than a string
 
-#+BEGIN_SRC go :exports both :tangle examples/complex.go
+#+BEGIN_SRC go :exports both :tangle examples/complex/complex.go
   package main
 
   import (
