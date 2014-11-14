@@ -16,31 +16,32 @@ You probably want to spend your time worrying about what the commands do, and no
 
 ** A Simple Command
 
-#+BEGIN_SRC go :cached yes :exports both
-  package main
+#+BEGIN_SRC go :cached yes :exports both :tangle examples/simple.go
+    package main
 
-  import (
-      "github.com/katco-/cmdtree"
-      "fmt"
-  )
+    import (
+        "github.com/katco-/cmdtree"
+        "fmt"
+    )
 
-  func main() {
-      const delimiter = " "
-      cmd := cmdtree.NewCmd(delimiter, "help", func(arg string) error {
-          fmt.Printf(`You requested help for "%s".\n`, arg)
-          return nil
-      })
+    func main() {
+        const delimiter = " "
+        cmd := cmdtree.NewCmd(delimiter, "help", func(arg string) error {
+            fmt.Printf(`You requested help for "%s".`, arg)
+            fmt.Println()
+            return nil
+        })
 
-      cmd.Execute("help cmdtree")
-  }
+        cmd.Execute("help cmdtree")
+    }
 #+END_SRC
 
 #+RESULTS:
-: You requested help for "cmdtree".\n
+: You requested help for "cmdtree".
 
 ** A Command with an Optional Sub-Command
 
-#+BEGIN_SRC go :cached yes :exports both
+#+BEGIN_SRC go :cached yes :exports both :tangle examples/subcommands.go
   package main
 
   import (
@@ -75,7 +76,7 @@ You probably want to spend your time worrying about what the commands do, and no
 
 The levels of sub-commands can be arbitrarily deep, but the complexity remains manageable because you can continually pick up from the previous level.
 
-#+BEGIN_SRC go :exports both
+#+BEGIN_SRC go :exports both :tangle examples/multiplelevels.go
   package main
 
   import (
@@ -135,7 +136,7 @@ The levels of sub-commands can be arbitrarily deep, but the complexity remains m
 
 ** A Command with More than a string
 
-#+BEGIN_SRC go :exports both
+#+BEGIN_SRC go :exports both :tangle examples/complex.go
   package main
 
   import (
