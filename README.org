@@ -1,0 +1,223 @@
+#+TITLE: cmdtree
+#+AUTHOR: Katherine E. Cox-Buday
+
+cmdtree is a library which curates command and sub-command creation and execution.
+
+You probably want to spend your time worrying about what the commands do, and not how to let user's execute them. In that spirit, cmdtree provides the following:
+
+1. A simple command signature, extensible through closures.
+2. Composeable commands and sub-commands.
+   - Commands can be empty hosts to sub-commands, or commands in their own right.
+   - cmdtree distinguishes between a sub-command and arguments.
+3. Parsing of user-input.
+4. Built-in string representation of the entire command tree, or one of its branches.
+
+* Examples
+
+** A Simple Command
+
+#+BEGIN_SRC go :cached yes :exports both
+  package main
+
+  import (
+      "github.com/katco-/cmdtree"
+      "fmt"
+  )
+
+  func main() {
+      const delimiter = " "
+      cmd := cmdtree.NewCmd(delimiter, "help", func(arg string) error {
+          fmt.Printf(`You requested help for "%s".\n`, arg)
+          return nil
+      })
+
+      cmd.Execute("help cmdtree")
+  }
+#+END_SRC
+
+#+RESULTS:
+: You requested help for "cmdtree".\n
+
+** A Command with an Optional Sub-Command
+
+#+BEGIN_SRC go :cached yes :exports both
+  package main
+
+  import (
+      "fmt"
+      "github.com/katco-/cmdtree"
+  )
+
+  func main() {
+      const delimiter = " "
+      cmd := cmdtree.NewCmd(delimiter, "help", func(arg string) error {
+          fmt.Printf(`You requested help for "%s".`, arg)
+          return nil
+      })
+
+      cmd.SubCmd("deep", func(arg string) error {
+          fmt.Printf(`You requested DEEP help for "%s".`, arg)
+          return nil
+      })
+
+      cmd.Execute("help cmdtree")
+      fmt.Println()
+      cmd.Execute("help deep cmdtree internals")
+  }
+
+#+END_SRC
+
+#+RESULTS:
+: You requested help for "cmdtree".
+: You requested DEEP help for "cmdtree internals".
+
+** Multiple Command levels
+
+The levels of sub-commands can be arbitrarily deep, but the complexity remains manageable because you can continually pick up from the previous level.
+
+#+BEGIN_SRC go :exports both
+  package main
+
+  import (
+      "bytes"
+      "fmt"
+      "github.com/katco-/cmdtree"
+  )
+
+  func main() {
+      const delimiter = " "
+      help := cmdtree.NewCmd(delimiter, "help", nil)
+
+      var with cmdtree.Command
+      with = help.SubCmd("with", func(string) error {
+          var buff bytes.Buffer
+          fmt.Fprint(&buff, "Available options:")
+          fmt.Fprintln(&buff)
+          fmt.Fprintln(&buff, with.String())
+
+          return fmt.Errorf(buff.String())
+      })
+
+      with.SubCmd("cmdtree", func(string) error {
+          fmt.Println("It makes cupcakes! ...I think.")
+          return nil
+      })
+
+      with.SubCmd("life", func(string) error {
+          fmt.Println("Whoa. A code example is the wrong place for that, friend.")
+          return nil
+      })
+
+      with.SubCmd("sleep", func(string) error {
+          fmt.Println("Is that what I'm supposed to be doing right now?")
+          return nil
+      })
+
+      if err := help.Execute("help with"); err != nil {
+          fmt.Println(err)
+      }
+
+      fmt.Println("What does cmdtree do for me?")
+      help.Execute("help with cmdtree")
+  }
+
+#+END_SRC
+
+#+RESULTS:
+: Available options:
+: with
+: 	cmdtree
+: 	life
+: 	sleep
+:
+: What does cmdtree do for me?
+: It makes cupcakes! ...I think.
+
+** A Command with More than a string
+
+#+BEGIN_SRC go :exports both
+  package main
+
+  import (
+      "fmt"
+      "github.com/katco-/cmdtree"
+      "strconv"
+  )
+
+  type User struct {
+      Name                  string
+      LevelOfLoveForCmdtree int
+  }
+
+  func main() {
+
+      var currentUser *User
+      users := []*User{
+          &User{"Wirt. Just Wirt.", 0},
+          &User{"Greg the frog catcher", 100},
+          &User{"Beatrice the Bluebird", 5},
+      }
+
+      root := cmdtree.Root(" ")
+
+      set := root.SubCmd("set", nil)
+      set.SubCmd("love", setLoveForUserFn(&currentUser))
+
+      print := root.SubCmd("print", nil)
+      print.SubCmd("users", func (name string) error{
+          fmt.Println("Users:")
+          for _, user := range users {
+              if name != "" && user.Name != name {
+                  continue
+              }
+
+              fmt.Printf(`"%s" loves cmdtree %d%%!`, user.Name, user.LevelOfLoveForCmdtree)
+              fmt.Println()
+          }
+          fmt.Println()
+          return nil
+      })
+
+      root.Execute("print users")
+
+      for _, user := range users {
+          currentUser = user
+          root.Execute("set love 100")
+      }
+
+      root.Execute("print users Wirt. Just Wirt.")
+      root.Execute("print users")
+  }
+
+  func setLoveForUserFn(user **User) cmdtree.CommandExecutor {
+      return func(level string) error {
+          numericLevel, err := strconv.Atoi(level)
+          if err != nil {
+              return err
+          } else if numericLevel < 0 {
+              return fmt.Errorf("I'm sorry %s, I can't do that.", (*user).Name)
+          }
+
+          (*user).LevelOfLoveForCmdtree = numericLevel
+          return nil
+      }
+  }
+
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Users:
+"Wirt. Just Wirt." loves cmdtree 0%!
+"Greg the frog catcher" loves cmdtree 100%!
+"Beatrice the Bluebird" loves cmdtree 5%!
+
+Users:
+"Wirt. Just Wirt." loves cmdtree 100%!
+
+Users:
+"Wirt. Just Wirt." loves cmdtree 100%!
+"Greg the frog catcher" loves cmdtree 100%!
+"Beatrice the Bluebird" loves cmdtree 100%!
+#+end_example
